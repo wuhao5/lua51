@@ -28,6 +28,8 @@ IOSSIMSYSROOT=$XCODE_ROOT/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPho
 
 LUA_HEADERS="$SRCDIR/src/lua.h $SRCDIR/src/luaconf.h $SRCDIR/src/lualib.h $SRCDIR/src/lauxlib.h $SRCDIR/etc/lua.hpp"
 
+EXTRA_CFLAGS="-DLUA_USE_DLOPEN"
+
 compile_framework() {
 	FRAMEWORK_BUNDLE=$1/lua.framework
 	FRAMEWORK_VERSION=A
@@ -87,12 +89,12 @@ EOF
 mkdir -p $IOSBUILDDIR
 
 cd src && make clean echo liblua.a CC=$ARM_DEV_DIR$COMPILER \
-	CFLAGS="-Wall -Os -arch armv6 -arch armv7 -arch armv7s -x c -isysroot $IOSSYSROOT" \
+	CFLAGS="-Wall -Os -arch armv6 -arch armv7 -arch armv7s -x c -isysroot $IOSSYSROOT $EXTRA_CFLAGS" \
 	AR="$ARM_DEV_DIR/ar rcu" RANLIB="$ARM_DEV_DIR/ranlib"; cd -
 cp src/liblua.a $ARM_COMBINED_LIB
 
 cd src && make clean echo liblua.a CC=$SIM_DEV_DIR$COMPILER \
-	CFLAGS="-Wall -Os -arch i386 -x c -isysroot $IOSSIMSYSROOT" \
+	CFLAGS="-Wall -Os -arch i386 -x c -isysroot $IOSSIMSYSROOT $EXTRA_CFLAGS" \
 	AR="$ARM_DEV_DIR/ar rcu" RANLIB="$ARM_DEV_DIR/ranlib"; cd -
 cp src/liblua.a $SIM_COMBINED_LIB
 
@@ -101,7 +103,7 @@ echo build ios framework ...
 compile_framework $IOSFRAMEWORKDIR $ARM_COMBINED_LIB $SIM_COMBINED_LIB
 
 echo build osx framework ...
-cd src && make clean echo liblua.a CFLAGS="-Wall -Os -arch x86_64 -arch i386 -x c" CC=clang; cd -
+cd src && make clean echo liblua.a CFLAGS="-Wall -Os -arch x86_64 -arch i386 -x c -DLUA_USE_LINUX $EXTRA_CFLAGS" CC=clang; cd -
 cp src/liblua.a $OSX_COMBINED_LIB
 compile_framework $OSXFRAMEWORKDIR $OSX_COMBINED_LIB
 
