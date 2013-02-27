@@ -21,7 +21,7 @@ SIM_DEV_DIR=$XCODE_ROOT/Platforms/iPhoneSimulator.platform/Developer/usr/bin/
 
 ARM_COMBINED_LIB=$IOSBUILDDIR/lib_lua_arm.a
 SIM_COMBINED_LIB=$IOSBUILDDIR/lib_lua_x86.a
-OSX_COMBINED_LIB=$IOSBUILDDIR/lib_lua_osx.a
+OSX_COMBINED_LIB=$OSXBUILDDIR/lib_lua_osx.a
 
 IOSSYSROOT=$XCODE_ROOT/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS$IPHONE_SDKVERSION.sdk
 IOSSIMSYSROOT=$XCODE_ROOT/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator$IPHONE_SDKVERSION.sdk
@@ -53,6 +53,7 @@ compile_framework() {
 	ln -s Versions/Current/$FRAMEWORK_NAME $FRAMEWORK_BUNDLE/$FRAMEWORK_NAME
 
 	FRAMEWORK_INSTALL_NAME=$FRAMEWORK_BUNDLE/Versions/$FRAMEWORK_VERSION/$FRAMEWORK_NAME
+	cp `dirname $1`/luac $FRAMEWORK_BUNDLE/Versions/$FRAMEWORK_VERSION/Resources/luac
 
 	echo "Lipoing library into $FRAMEWORK_INSTALL_NAME..."
 	$ARM_DEV_DIR/lipo -create $@ -output "$FRAMEWORK_INSTALL_NAME" || exit
@@ -87,24 +88,29 @@ EOF
 
 
 mkdir -p $IOSBUILDDIR
+mkdir -p $OSXBUILDDIR
 
-cd src && make clean echo liblua.a CC=$ARM_DEV_DIR$COMPILER \
-	CFLAGS="-Wall -Os -arch armv6 -arch armv7 -arch armv7s -x c -isysroot $IOSSYSROOT $EXTRA_CFLAGS" \
-	AR="$ARM_DEV_DIR/ar rcu" RANLIB="$ARM_DEV_DIR/ranlib"; cd -
-cp src/liblua.a $ARM_COMBINED_LIB
+#cd src && make clean echo liblua.a CC=$ARM_DEV_DIR$COMPILER \
+#	CFLAGS="-Wall -Os -arch armv6 -arch armv7 -arch armv7s -x c -isysroot $IOSSYSROOT $EXTRA_CFLAGS" \
+#	AR="$ARM_DEV_DIR/ar rcu" RANLIB="$ARM_DEV_DIR/ranlib"; cd -
+#cp src/liblua.a $ARM_COMBINED_LIB
 
-cd src && make clean echo liblua.a CC=$SIM_DEV_DIR$COMPILER \
+make clean echo generic CC=$SIM_DEV_DIR$COMPILER \
 	CFLAGS="-Wall -Os -arch i386 -x c -isysroot $IOSSIMSYSROOT $EXTRA_CFLAGS" \
-	AR="$ARM_DEV_DIR/ar rcu" RANLIB="$ARM_DEV_DIR/ranlib"; cd -
+	MYLDFLAGS="-arch i386 -isysroot $IOSSIMSYSROOT" \
+	AR="$ARM_DEV_DIR/ar rcu" RANLIB="$ARM_DEV_DIR/ranlib"
 cp src/liblua.a $SIM_COMBINED_LIB
 
+#make clean echo macosx CFLAGS="-Wall -Os -arch i386 -m32 $EXTRA_CFLAGS" LDFLAGS="
+cp src/luac $IOSBUILDDIR/luac
 
 echo build ios framework ...
 compile_framework $IOSFRAMEWORKDIR $ARM_COMBINED_LIB $SIM_COMBINED_LIB
 
 echo build osx framework ...
-cd src && make clean echo liblua.a CFLAGS="-Wall -Os -arch x86_64 -arch i386 -x c -DLUA_USE_LINUX $EXTRA_CFLAGS" CC=clang; cd -
+make clean echo macosx  CC=clang
 cp src/liblua.a $OSX_COMBINED_LIB
+cp src/luac $OSXBUILDDIR/luac
 compile_framework $OSXFRAMEWORKDIR $OSX_COMBINED_LIB
 
 echo framework will be at $IOSFRAMEWORKDIR and $OSXFRAMEWORKDIR

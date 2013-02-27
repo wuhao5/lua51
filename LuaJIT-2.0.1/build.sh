@@ -58,7 +58,7 @@ compile_framework() {
 
 	echo "Lipoing library into $FRAMEWORK_INSTALL_NAME..."
 	$ARM_DEV_DIR/lipo -create $@ -output "$FRAMEWORK_INSTALL_NAME" || exit
-	cp $IOSBUILDDIR/luajitc $FRAMEWORK_BUNDLE/Versions/$FRAMEWORK_VERSION/Resources/luajitc
+	cp `dirname $1`/luajitc $FRAMEWORK_BUNDLE/Versions/$FRAMEWORK_VERSION/Resources/luajitc
 
 	echo "Framework: Copying includes..."
 	cp -r $FILES_INC $FRAMEWORK_BUNDLE/Headers/
