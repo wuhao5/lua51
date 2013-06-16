@@ -12,7 +12,7 @@
 
 MAJVER=  2
 MINVER=  0
-RELVER=  0
+RELVER=  2
 ABIVER=  5.1
 NODOTABIVER= 51
 
@@ -100,10 +100,12 @@ XCFLAGS=
 # enabled by default. Some other features that *might* break some existing
 # code (e.g. __pairs or os.execute() return values) can be enabled here.
 # Note: this does not provide full compatibility with Lua 5.2 at this time.
-#XCFLAGS+= -DLUAJIT_ENABLE_LUA52COMPAT
+XCFLAGS+= -DLUAJIT_ENABLE_LUA52COMPAT
 #
 # Disable the JIT compiler, i.e. turn LuaJIT into a pure interpreter.
 #XCFLAGS+= -DLUAJIT_DISABLE_JIT
+XCFLAGS+= -DLUAJIT_ENABLE_JIT
+
 #
 # Some architectures (e.g. PPC) can use either single-number (1) or
 # dual-number (2) mode. Uncomment one of these lines to override the
@@ -487,7 +489,8 @@ TARGET_DEP= $(LIB_VMDEF) $(LUAJIT_SO)
 
 ifeq (Windows,$(TARGET_SYS))
   TARGET_DYNCC= $(STATIC_CC)
-  LJVM_MODE= coffasm
+  LJVM_MODE= peobj
+  LJVM_BOUT= $(LJVM_O)
   LUAJIT_T= luajit.exe
   ifeq (cygwin,$(HOST_MSYS))
     LUAJIT_SO= cyg$(TARGET_DLLNAME)
